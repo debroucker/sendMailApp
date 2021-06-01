@@ -1,3 +1,9 @@
+body.txt
+already_send.txt
+not_send.txt
+config.json
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

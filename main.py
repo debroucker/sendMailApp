@@ -11,7 +11,7 @@ def getLinesOfFile(f) :
     readFile = open(f, "r", encoding="utf8")
     lines = readFile.readlines()
     readFile.close()
-    return lines
+    return [line.replace('\n', '').strip() for line in lines]
 
 def getContentOfFile(f) :
     readFile = open(f, "r", encoding="utf8")
@@ -33,7 +33,13 @@ def jsonToDict(f) :
     with open(f, encoding="utf8") as json_data_file:
         return json.load(json_data_file)
 
-def sendMail(fromAddr, password, toAddr, files, body, subject) :
+def init_mail(fromAddr, password):
+    s = smtplib.SMTP('smtp.gmail.com', 587)
+    s.starttls()
+    s.login(fromAddr, password)
+    return s
+
+def sendMail(s, fromAddr, toAddr, files, body, subject) :
     try :
         msg = MIMEMultipart() 
         msg['From'] = fromAddr 
@@ -41,38 +47,45 @@ def sendMail(fromAddr, password, toAddr, files, body, subject) :
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
         for f in files :
+            name = f.split('/')[-1]
             attachment = open(f.strip(), "rb")
             p = MIMEBase('application', 'octet-stream') 
             p.set_payload((attachment).read()) 
             encoders.encode_base64(p) 
-            p.add_header('Content-Disposition', "attachment; filename= %s" % f) 
+            p.add_header('Content-Disposition', f"attachment; filename={name}")
             msg.attach(p) 
-        s = smtplib.SMTP('smtp.gmail.com', 587) 
-        s.starttls()
-        s.login(fromAddr, password) 
         text = msg.as_string()
         s.sendmail(fromAddr, toAddr, text)
-        s.quit() 
         return True
     except :
         return False
 
 def main() : 
+    #init
     res = ""
     body = getContentOfFile("body.txt")
     d = jsonToDict("config.json")
     alreadySend = getLinesOfFile("already_send.txt")
     notSend = getLinesOfFile("not_send.txt")
-    for l in notSend : 
-        if l.strip() != "" : 
+    #mail var
+    mail = d['mail']
+    pw = d['pw']
+    try :
+        s = init_mail(mail, pw)
+        for l in notSend : 
             addr = l.strip()
-            if addr not in alreadySend : 
-                if sendMail(d["mail"], d["pw"], addr, d["files"].split(","), body, d["subject"]) : 
-                    print("mail sended to " + addr)
-                    addInFile("already_send.txt", addr + "\n")
-                else : 
-                    print("error, not sended to " + addr)
-                    res += addr + "\n"
-    writeInFile("not_send.txt", res)
+            if addr != "":
+                if addr not in alreadySend : 
+                    if sendMail(s, mail, addr, d["files"].split(","), body, d["subject"]) : 
+                        print(f"mail sended to {addr}")
+                        addInFile("already_send.txt", addr + "\n")
+                    else : 
+                        print(f"error, not sended to {addr}")
+                        res += addr + "\n"
+            print(f"already sended to {addr}")
+        writeInFile("not_send.txt", res)
+        s.quit()
+    except :
+        print(f"error, not connected to mail: '{mail}' with pw: '{pw}'")
 
 main()

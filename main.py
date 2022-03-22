@@ -82,7 +82,8 @@ def main() :
                     else : 
                         print(f"error, not sended to {addr}")
                         res += addr + "\n"
-            print(f"already sended to {addr}")
+                else :
+                    print(f"already sended to {addr}")
         writeInFile("not_send.txt", res)
         s.quit()
     except :

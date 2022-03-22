@@ -77,13 +77,13 @@ def main() :
             if addr != "":
                 if addr not in alreadySend : 
                     if sendMail(s, mail, addr, d["files"].split(","), body, d["subject"]) : 
-                        print(f"mail sended to {addr}")
+                        print(f"mail sended to '{addr}'")
                         addInFile("already_send.txt", addr + "\n")
                     else : 
-                        print(f"error, not sended to {addr}")
+                        print(f"error, not sended to '{addr}'")
                         res += addr + "\n"
                 else :
-                    print(f"already sended to {addr}")
+                    print(f"already sended to '{addr}'")
         writeInFile("not_send.txt", res)
         s.quit()
     except :
